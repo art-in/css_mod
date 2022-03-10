@@ -1,0 +1,158 @@
+stylesheet = _{
+    SOI ~ WHITE_SPACE* ~ (comment | ruleset)* ~ EOI
+}
+
+comment = {
+    "/*" ~ (!"*/" ~ ANY)* ~ "*/"
+    ~ WHITE_SPACE*
+}
+
+identifier = {
+    (!ASCII_DIGIT ~ identifier_char)
+    ~ identifier_char*
+}
+
+identifier_char = _{
+    !(PUNCTUATION | SYMBOL | WHITE_SPACE) ~ ANY
+    | "-" | "_" | "\\" ~ ANY
+}
+
+ruleset = _{
+    (atrule | selectrule)
+     ~ WHITE_SPACE*
+}
+
+atrule = {
+    "@"
+    ~ identifier
+    ~ WHITE_SPACE+
+    ~ atrule_rule
+    ~ WHITE_SPACE*
+    ~ (";" | block)
+}
+
+atrule_rule = {
+    (!("{" | "}" | ";") ~ ANY)+
+}
+
+selectrule = {
+    selectrule_rule
+    ~ WHITE_SPACE*
+    ~ block
+}
+
+selectrule_rule = {
+    (!("{" | "}" | ";") ~ ANY)+
+}
+
+block = _{
+    "{"
+    ~ WHITE_SPACE*
+    ~ (
+        WHITE_SPACE+
+        | comment
+        | property
+        | ruleset
+        | line_comment
+    )*
+    ~ ("}" ~ WHITE_SPACE* | error_block_not_terminated)
+}
+
+error_block_not_terminated = {
+    ANY* ~ EOI
+}
+
+property = {
+    identifier
+    ~ WHITE_SPACE*
+    ~ ":"
+    ~ WHITE_SPACE*
+    ~ property_value
+    ~ (";" | &"}")
+}
+
+property_value = {
+    property_contents*
+}
+
+line_comment = {
+    ("*" | "//" | "#")
+    ~ WHITE_SPACE*
+    ~ identifier
+    ~ WHITE_SPACE*
+    ~ ":"
+    ~ WHITE_SPACE*
+    ~ (!(";" | "}") ~ ANY)*
+    ~ (";" | &"}")
+}
+
+property_contents = _{
+    property_text
+    | property_round_brace
+    | property_square_brace
+    | property_string_single
+    | property_string_double
+    | comment
+}
+
+property_text = _{
+    (!("{" | "}" | "(" | ")" | "[" | "]" | "'" | "\"" | "/*" | ";") ~ ANY)+
+}
+
+property_round_brace = _{
+    "("
+    ~ WHITE_SPACE*
+    ~ (property_data_url | property_contents)*
+    ~ ")"
+    ~ WHITE_SPACE*
+}
+
+property_data_url = {
+    "data:"
+    ~ (!(WHITE_SPACE | ")") ~ ANY)+
+    ~ WHITE_SPACE*
+}
+
+property_curly_brace = _{
+    "{" ~ property_contents* ~ "}"
+}
+
+property_square_brace = _{
+    "[" ~ property_contents* ~ "]"
+}
+
+property_string_single = _{
+    "'" ~ (!"'" ~ ANY)* ~ "'"
+}
+
+property_string_double = _{
+    "\"" ~ (!"\"" ~ ANY)* ~ "\""
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+selector = _{
+    WHITE_SPACE*
+    ~ (selector_class | selector_other)+
+}
+
+selector_class = {
+    "." ~ identifier
+}
+
+selector_other = {
+    (!(".") ~ ANY)+
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+animation = _{
+    WHITE_SPACE*
+    ~ comment?
+    ~ identifier
+    ~ animation_other?
+}
+
+animation_other = {
+    ANY+
+}
