@@ -9,7 +9,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-// TODO: think about returning Errors instead of panics everywhere
+// TODO: think about returning Errors instead of panics everywhere in compiler
 
 #[allow(clippy::needless_doctest_main)]
 /// CSS Modules compiler.
@@ -160,7 +160,7 @@ impl Compiler {
         );
         let out_dir = Path::new(&out_dir);
 
-        let mappings_code_file_path = &out_dir.join("css_mod_mappings.rs");
+        let mappings_code_file_path = &out_dir.join(crate::MAPPINGS_FILE_NAME!());
         log::debug!(
             "mappings code ({:?}):\n{}",
             mappings_code_file_path,
@@ -177,8 +177,6 @@ impl Compiler {
         file.write_all(content.as_bytes())
             .expect("Could not write to file.");
     }
-
-    // TODO: check in standalone package (no workspace) scenario
 
     /// Gets path to workspace root directory of currently built package, or package root directory
     /// if it is not part of workspace.

@@ -20,13 +20,13 @@ This is currently incomplete implementation of CSS Modules spec, as it only supp
 1. Add this crate as a regular and build dependency:
 
     ```toml
-    // Cargo.toml
+    # Cargo.toml
 
     [dependencies]
-    css_mod = TODO
+    css_mod = { git = "https://github.com/art-in/css_mod" }
 
     [build-dependencies]
-    css_mod = TODO
+    css_mod = { git = "https://github.com/art-in/css_mod" }
     ```
 
 2. Compile CSS modules in build script:
@@ -57,8 +57,7 @@ This is currently incomplete implementation of CSS Modules spec, as it only supp
     // my-component.rs
 
     let css = css_mod::get!("my-component.css");
-    let global_class_name = css["local-class-name"];
+    let global_class_name = css["local-class-name"]; // my-component__local-class-name__0
     ```
 
 [CSS Modules]: https://github.com/css-modules/css-modules
-[Parcel CSS]: https://github.com/parcel-bundler/parcel-css

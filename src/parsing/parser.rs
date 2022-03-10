@@ -41,6 +41,7 @@ impl<'p> From<Pair<'p, Rule>> for Error {
             spacing.push(' ');
         }
 
+        // TODO: add file path to error message
         Error::AtPair(format!(
             " {line_no:indent$} ┊ {line}\n    {spacing:col_no$}│\n    {spacing:col_no$}╰ {message} at {line_no}:{col_no}",
             spacing = spacing,

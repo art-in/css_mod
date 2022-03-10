@@ -3,6 +3,7 @@ mod macros;
 mod mapping;
 mod parsing;
 
+// TODO: add integration tests
 // TODO: check output wasm code
 
 pub use compiler::Compiler;
