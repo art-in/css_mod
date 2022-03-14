@@ -1,0 +1,8 @@
+# cargo build artifacts
+/target/
+
+# versions shouldn't be locked for a lib
+/Cargo.lock
+
+# vscode config folder
+/.vscode/

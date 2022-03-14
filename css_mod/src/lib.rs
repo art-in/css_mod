@@ -3,6 +3,7 @@ mod macros;
 mod mapping;
 mod parsing;
 
+// TODO: add yew example
 // TODO: add integration tests
 // TODO: check output wasm code
 

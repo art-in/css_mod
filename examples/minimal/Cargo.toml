@@ -1,0 +1,10 @@
+[package]
+name = "minimal-example"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+css_mod = { path = "../../css_mod" }
+
+[build-dependencies]
+css_mod = { path = "../../css_mod" }
