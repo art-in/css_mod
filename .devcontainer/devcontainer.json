@@ -1,0 +1,13 @@
+{
+  "name": "css_mod",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "extensions": [
+    "eamodio.gitlens",
+    "matklad.rust-analyzer",
+    "tamasfe.even-better-toml",
+    "serayuzgur.crates",
+    "jedeop.crates-completer"
+  ]
+}
