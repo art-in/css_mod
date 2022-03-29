@@ -49,7 +49,7 @@ macro_rules! init {
     }};
 }
 
-/// Gets name mapping for concreet CSS module.
+/// Gets name mapping for CSS module.
 ///
 /// # Example
 ///
@@ -62,8 +62,7 @@ macro_rules! init {
 #[macro_export]
 macro_rules! get {
     ($a:expr) => {{
-        use ::std::path::PathBuf;
-        let css_file = PathBuf::from(file!()).parent().unwrap().join($a);
+        let css_file = ::std::path::Path::new(file!()).with_file_name($a);
         ::css_mod::get_mapping(css_file)
     }};
 }
