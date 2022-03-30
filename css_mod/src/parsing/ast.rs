@@ -1,4 +1,5 @@
-use super::parser::{self, Error, ParserResult, Rule};
+use super::parser::{self, Error, Rule};
+use anyhow::{anyhow, Context, Result};
 use pest::iterators::{Pair, Pairs};
 use std::collections::HashMap;
 use std::fmt;
@@ -95,23 +96,23 @@ impl fmt::Display for Child {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Context<'c> {
+pub struct ParserContext<'c> {
     pub module: &'c mut Module,
     pub name: &'c str,
     pub absolute_path: &'c PathBuf,
     pub stylesheet: &'c mut Stylesheet,
 }
 
-impl<'c> Context<'c> {
+impl<'c> ParserContext<'c> {
     fn add_name(&mut self, name: String) -> String {
-        self.module.names.entry(name.clone()).or_insert(format!(
+        let res = self.module.names.entry(name.clone()).or_insert(format!(
             "{}__{}__{}",
             &self.name, &name, &self.stylesheet.names_count
         ));
 
         self.stylesheet.names_count += 1;
 
-        self.module.names.get(&name).unwrap().to_owned()
+        res.to_owned()
     }
 }
 
@@ -123,6 +124,7 @@ pub struct Module {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 impl Default for Module {
     fn default() -> Self {
         use std::str::FromStr;
@@ -149,21 +151,24 @@ impl fmt::Display for Module {
 }
 
 impl<'m> Module {
-    pub fn new(
-        stylesheet: &mut Stylesheet,
-        file_path: PathBuf,
-        input: &'m str,
-    ) -> ParserResult<'m, Self> {
+    pub fn new(stylesheet: &mut Stylesheet, file_path: PathBuf, input: &'m str) -> Result<Self> {
         let pairs = parser::stylesheet(input)?;
         let mut module = Module {
             children: Children::new(),
             names: Names::new(),
             file_path: file_path.clone(),
         };
-        let mut context = Context {
+        let mut context = ParserContext {
             module: &mut module,
-            name: file_path.file_stem().unwrap().to_str().unwrap(),
-            absolute_path: &file_path.parent().unwrap().to_path_buf(),
+            name: file_path
+                .file_stem()
+                .context("No file stem")?
+                .to_str()
+                .context("Invalid file path")?,
+            absolute_path: &file_path
+                .parent()
+                .context("No parent directory")?
+                .to_path_buf(),
             stylesheet,
         };
 
@@ -173,7 +178,7 @@ impl<'m> Module {
                 Rule::atrule => atrule(&mut context, pair)?,
                 Rule::selectrule => selectrule(&mut context, pair)?,
                 Rule::EOI => None,
-                _ => return Err(Error::from(pair)),
+                _ => return Err(anyhow!(Error::from(pair))),
             };
 
             if let Some(child) = child {
@@ -192,11 +197,11 @@ pub struct Stylesheet {
 }
 
 impl Stylesheet {
-    pub fn add_module<'m>(&mut self, module_path: &Path) -> ParserResult<'m, &Module> {
-        let mut file = File::open(module_path).expect("file not found");
+    pub fn add_module(&mut self, module_path: &Path) -> Result<&Module> {
+        let mut file = File::open(module_path)?;
         let mut input = String::new();
 
-        file.read_to_string(&mut input).unwrap();
+        file.read_to_string(&mut input)?;
 
         let module = Module::new(self, module_path.to_path_buf(), &input)?;
 
@@ -207,18 +212,18 @@ impl Stylesheet {
     }
 
     #[cfg(test)]
-    fn add_test_module<'m>(&mut self, input: &str) -> ParserResult<'m, &Module> {
+    #[allow(clippy::unwrap_used)]
+    fn add_test_module(&mut self, input: &str) -> Result<&Module> {
         use std::str::FromStr;
 
         let path = PathBuf::from_str(file!()).unwrap();
-
         let module = Module::new(self, path.clone(), input)?;
 
         Ok(self.modules.entry(path).or_insert(module))
     }
 }
 
-pub fn atrule<'t>(context: &mut Context, pair: Pair<'t, Rule>) -> ParserResult<'t, Option<Child>> {
+pub fn atrule<'t>(context: &mut ParserContext, pair: Pair<'t, Rule>) -> Result<Option<Child>> {
     let mut name: Option<String> = None;
     let mut rule: Option<String> = None;
     let mut children = Vec::new();
@@ -259,7 +264,7 @@ pub fn atrule<'t>(context: &mut Context, pair: Pair<'t, Rule>) -> ParserResult<'
             Rule::property => property(context, pair)?,
             Rule::atrule => atrule(context, pair)?,
             Rule::selectrule => selectrule(context, pair)?,
-            _ => return Err(Error::from(pair)),
+            _ => return Err(anyhow!(Error::from(pair))),
         };
 
         if let Some(child) = child {
@@ -280,10 +285,7 @@ pub fn comment(pair: Pair<Rule>) -> Option<Child> {
     })
 }
 
-pub fn property<'t>(
-    context: &mut Context,
-    pair: Pair<'t, Rule>,
-) -> ParserResult<'t, Option<Child>> {
+pub fn property<'t>(context: &mut ParserContext, pair: Pair<'t, Rule>) -> Result<Option<Child>> {
     let mut name: Option<String> = None;
     let mut value: Option<String> = None;
 
@@ -299,17 +301,14 @@ pub fn property<'t>(
                     value = Some(pair.as_str().trim().into());
                 }
             }
-            _ => return Err(Error::from(pair)),
+            _ => return Err(anyhow!(Error::from(pair))),
         }
     }
 
     Ok(Some(Child::Property { name, value }))
 }
 
-pub fn selectrule<'t>(
-    context: &mut Context,
-    pair: Pair<'t, Rule>,
-) -> ParserResult<'t, Option<Child>> {
+pub fn selectrule<'t>(context: &mut ParserContext, pair: Pair<'t, Rule>) -> Result<Option<Child>> {
     let mut rule: Option<String> = None;
     let mut children = Vec::new();
 
@@ -324,7 +323,7 @@ pub fn selectrule<'t>(
             Rule::property => property(context, pair)?,
             Rule::atrule => atrule(context, pair)?,
             Rule::selectrule => selectrule(context, pair)?,
-            _ => return Err(Error::from(pair)),
+            _ => return Err(anyhow!(Error::from(pair))),
         };
 
         if let Some(child) = child {
@@ -335,10 +334,7 @@ pub fn selectrule<'t>(
     Ok(Some(Child::SelectRule { rule, children }))
 }
 
-pub fn replace_names<'t>(
-    context: &mut Context,
-    pairs: Pairs<Rule>,
-) -> ParserResult<'t, Option<String>> {
+pub fn replace_names(context: &mut ParserContext, pairs: Pairs<Rule>) -> Result<Option<String>> {
     let mut result = String::new();
 
     for pair in pairs {
@@ -368,6 +364,7 @@ pub fn replace_names<'t>(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
 

@@ -1,8 +1,8 @@
 use once_cell::sync::OnceCell;
 use std::{collections::HashMap, ops::Index, panic, path::PathBuf};
 
-/// Mapping between original local names and transformed global names for particular CSS module.
-#[derive(Default, Clone, Debug)]
+/// Mapping of original local names to transformed global names for particular CSS module.
+#[derive(Default, Debug)]
 pub struct Mapping<'m> {
     names: HashMap<&'m str, &'m str>,
     css_module_path: &'m str,
@@ -52,6 +52,10 @@ pub fn get_mapping<'g>(css_module_path: PathBuf) -> &'g Mapping<'g> {
                 Help: call css_mod::init!() once early (eg. in main.rs)",
         )
         .0
-        .get(css_module_path.to_str().unwrap())
+        .get(
+            css_module_path
+                .to_str()
+                .expect("Failed to read CSS module path"),
+        )
         .unwrap_or_else(|| panic!("CSS module was not found: {:?}", css_module_path))
 }

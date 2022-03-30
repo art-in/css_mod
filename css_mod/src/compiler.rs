@@ -1,8 +1,10 @@
 use crate::parsing::ast;
+use anyhow::{Context, Result};
 use glob::glob;
 use quote::quote;
 use serde::Deserialize;
 use std::{
+    collections::HashSet,
     env,
     fs::{create_dir_all, File},
     io::Write,
@@ -23,13 +25,13 @@ use std::{
 ///
 /// fn main() {
 ///     css_mod::Compiler::new()
-///         .add_modules("src/**/*.css")
-///         .compile("assets/app.css");
+///         .add_modules("src/**/*.css").unwrap()
+///         .compile("assets/app.css").unwrap();
 /// }
 /// ```
 #[derive(Debug, Default)]
 pub struct Compiler {
-    input_modules: Vec<PathBuf>,
+    input_modules: HashSet<PathBuf>,
 }
 
 impl Compiler {
@@ -37,14 +39,18 @@ impl Compiler {
         Compiler::default()
     }
 
-    fn add_module_buf(&mut self, mut path: PathBuf) {
+    fn add_module_buf(&mut self, mut path: PathBuf) -> Result<()> {
         if path.is_relative() {
-            path = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join(path);
+            let manifest_dir = env::var("CARGO_MANIFEST_DIR").context("CARGO_MANIFEST_DIR")?;
+            path = PathBuf::from(manifest_dir).join(path);
         }
 
+        // TODO: remove debug?
         log::debug!("add css module: {:?}", path);
 
-        self.input_modules.push(path);
+        self.input_modules.insert(path);
+
+        Ok(())
     }
 
     /// Adds CSS module to compile.
@@ -52,12 +58,12 @@ impl Compiler {
     /// Arguments:
     ///
     /// * `path`: File path, which may be absolute or relative to package root directory.
-    pub fn add_module(&mut self, path: &str) -> &mut Self {
-        let path = PathBuf::from(path).canonicalize().unwrap();
+    pub fn add_module(&mut self, path: &str) -> Result<&mut Self> {
+        let path = PathBuf::from(path);
 
-        self.add_module_buf(path);
+        self.add_module_buf(path)?;
 
-        self
+        Ok(self)
     }
 
     /// Adds CSS modules to compile.
@@ -65,12 +71,12 @@ impl Compiler {
     /// Arguments:
     ///
     /// * `pattern`: Glob pattern, which may be absolute or relative to package root directory.
-    pub fn add_modules(&mut self, pattern: &str) -> &mut Self {
-        for entry in glob(pattern).expect("Failed to read glob pattern") {
-            self.add_module_buf(entry.unwrap());
+    pub fn add_modules(&mut self, pattern: &str) -> Result<&mut Self> {
+        for entry in glob(pattern).context("Failed to read glob pattern")? {
+            self.add_module_buf(entry?)?;
         }
 
-        self
+        Ok(self)
     }
 
     /// Transforms input CSS modules and produces CSS bundle with contents of them all.
@@ -81,21 +87,24 @@ impl Compiler {
     ///
     /// * `css_bundle_path`: File path for output CSS bundle, which may be absolute or relative to
     ///                      package root directory.
-    pub fn compile(&self, css_bundle_path: &str) {
+    pub fn compile(&self, css_bundle_path: &str) -> Result<()> {
         // parse and transform input CSS files
         let mut stylesheet = ast::Stylesheet::default();
 
         for module_path in &self.input_modules {
-            stylesheet
-                .add_module(module_path)
-                .expect("Failed to parse and transform css module");
+            stylesheet.add_module(module_path).with_context(|| {
+                format!(
+                    "Failed to parse and transform CSS module: {:?}",
+                    module_path
+                )
+            })?;
         }
 
         // generate contents for css bundle and mappings code files
         let mut css_bundle_content = String::new();
         let mut mappings_code_content = String::new();
 
-        let workspace_dir = Self::get_workspace_dir();
+        let workspace_dir = Self::get_workspace_dir()?;
         log::debug!("workspace dir: {:?}", workspace_dir);
 
         mappings_code_content.push_str(
@@ -116,10 +125,9 @@ impl Compiler {
             debug_assert!(module.file_path.is_absolute());
             let relative_module_path = module
                 .file_path
-                .strip_prefix(&workspace_dir)
-                .unwrap()
+                .strip_prefix(&workspace_dir)?
                 .to_str()
-                .unwrap();
+                .context("Failed to construct relative module path")?;
 
             let mut identifiers = Vec::new();
 
@@ -140,7 +148,7 @@ impl Compiler {
         // output css bundle
         let mut css_bundle_path = PathBuf::from(css_bundle_path);
         if css_bundle_path.is_relative() {
-            let package_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+            let package_dir = env::var("CARGO_MANIFEST_DIR").context("CARGO_MANIFEST_DIR")?;
             let package_dir = Path::new(&package_dir);
 
             css_bundle_path = package_dir.join(&css_bundle_path);
@@ -151,13 +159,13 @@ impl Compiler {
             css_bundle_path,
             css_bundle_content
         );
-        Self::write(&css_bundle_path, css_bundle_content);
+        Self::write(&css_bundle_path, css_bundle_content)?;
 
         // output mappings code
-        let out_dir = env::var("OUT_DIR").expect(
+        let out_dir = env::var("OUT_DIR").context(
             "OUT_DIR environment variable was not found. \
-                Help: compilation should run from build script.",
-        );
+                Help: CSS modules compilation should run from build script.",
+        )?;
         let out_dir = Path::new(&out_dir);
 
         let mappings_code_file_path = &out_dir.join(crate::MAPPINGS_FILE_NAME!());
@@ -166,35 +174,40 @@ impl Compiler {
             mappings_code_file_path,
             mappings_code_content
         );
-        Self::write(mappings_code_file_path, mappings_code_content);
+        Self::write(mappings_code_file_path, mappings_code_content)?;
+
+        Ok(())
     }
 
-    fn write(file_path: &Path, content: String) {
-        let dir_path = file_path.parent().unwrap();
-        create_dir_all(&dir_path).expect("Could not create directory.");
+    fn write(file_path: &Path, content: String) -> Result<()> {
+        let dir_path = file_path
+            .parent()
+            .context("Failed to get parent directory")?;
+        create_dir_all(&dir_path)?;
 
-        let mut file = File::create(&file_path).expect("Could not create file.");
-        file.write_all(content.as_bytes())
-            .expect("Could not write to file.");
+        let mut file = File::create(&file_path)
+            .with_context(|| format!("Failed to create file: {:?}", file_path))?;
+        file.write_all(content.as_bytes())?;
+
+        Ok(())
     }
 
     /// Gets path to workspace root directory of currently built package, or package root directory
     /// if it is not part of workspace.
-    fn get_workspace_dir() -> PathBuf {
+    fn get_workspace_dir() -> Result<PathBuf> {
         // this is ugly but the only way to get workspace directory path right now
         // https://github.com/rust-lang/cargo/issues/3946
         #[derive(Deserialize)]
         struct Manifest {
             workspace_root: String,
         }
-        let package_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+        let package_dir = env::var("CARGO_MANIFEST_DIR").context("CARGO_MANIFEST_DIR")?;
         let output = std::process::Command::new(env!("CARGO"))
             .arg("metadata")
             .arg("--format-version=1")
             .current_dir(&package_dir)
-            .output()
-            .unwrap();
-        let manifest: Manifest = serde_json::from_slice(&output.stdout).unwrap();
-        PathBuf::from(manifest.workspace_root)
+            .output()?;
+        let manifest: Manifest = serde_json::from_slice(&output.stdout)?;
+        Ok(PathBuf::from(manifest.workspace_root))
     }
 }

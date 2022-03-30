@@ -1,11 +1,12 @@
+#![warn(clippy::unwrap_used)]
+
 mod compiler;
 mod macros;
 mod mapping;
 mod parsing;
 
-// TODO: add yew example
 // TODO: add integration tests
-// TODO: check output wasm code
+// TODO: manually test on windows
 
 pub use compiler::Compiler;
 pub use mapping::get_mapping;

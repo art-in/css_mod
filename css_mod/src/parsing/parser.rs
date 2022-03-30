@@ -1,28 +1,20 @@
+use anyhow::{anyhow, Result};
 use pest::iterators::Pair;
 use pest::iterators::Pairs;
 use pest::Parser;
 use pest_derive::*;
-use std::fmt;
+use thiserror::Error;
 
 #[derive(Parser)]
 #[grammar = "parsing/parser.pest"]
 struct Grammar;
 
-pub type ParserResult<'p, T> = Result<T, Error>;
-
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Error)]
 pub enum Error {
+    #[error("{0}")]
     Parser(pest::error::Error<Rule>),
+    #[error("{0}")]
     AtPair(String),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Error::Parser(error) => write!(formatter, "{}", error),
-            Error::AtPair(error) => write!(formatter, "{}", error),
-        }
-    }
 }
 
 impl<'p> From<Pair<'p, Rule>> for Error {
@@ -41,7 +33,6 @@ impl<'p> From<Pair<'p, Rule>> for Error {
             spacing.push(' ');
         }
 
-        // TODO: add file path to error message
         Error::AtPair(format!(
             " {line_no:indent$} ┊ {line}\n    {spacing:col_no$}│\n    {spacing:col_no$}╰ {message} at {line_no}:{col_no}",
             spacing = spacing,
@@ -54,21 +45,21 @@ impl<'p> From<Pair<'p, Rule>> for Error {
     }
 }
 
-fn parse<'p>(rule: Rule, input: &'p str) -> ParserResult<Pairs<'p, Rule>> {
+fn parse(rule: Rule, input: &str) -> Result<Pairs<Rule>> {
     match Grammar::parse(rule, input) {
         Ok(pairs) => Ok(pairs),
-        Err(error) => Err(Error::Parser(error)),
+        Err(error) => Err(anyhow!(Error::Parser(error))),
     }
 }
 
-pub fn animation<'p>(animation: &'p str) -> ParserResult<Pairs<'p, Rule>> {
+pub fn animation(animation: &str) -> Result<Pairs<Rule>> {
     parse(Rule::animation, animation)
 }
 
-pub fn stylesheet<'p>(stylesheet: &'p str) -> ParserResult<Pairs<'p, Rule>> {
+pub fn stylesheet(stylesheet: &str) -> Result<Pairs<Rule>> {
     parse(Rule::stylesheet, stylesheet)
 }
 
-pub fn selector<'p>(selector: &'p str) -> ParserResult<Pairs<'p, Rule>> {
+pub fn selector(selector: &str) -> Result<Pairs<Rule>> {
     parse(Rule::selector, selector)
 }
