@@ -1,0 +1,26 @@
+.root > h1 {
+    margin: 35px 0;
+    font-size: 80px;
+    line-height: 60px;
+    font-weight: 200;
+    text-align: center;
+    -webkit-text-rendering: optimizeLegibility;
+    -moz-text-rendering: optimizeLegibility;
+    text-rendering: optimizeLegibility;
+
+    background: linear-gradient(120deg, #b83f457d, #fff, #b83f457d);
+    background-size: 200%;
+    animation: animate-text 30s linear infinite;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0);
+}
+
+@keyframes animate-text {
+    0% {
+        background-position: 500%;
+    }
+    100% {
+        background-position: -500%;
+    }
+}

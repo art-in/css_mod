@@ -1,2 +1,2 @@
 [workspace]
-members = ["css_mod", "examples/minimal"]
+members = ["css_mod", "examples/minimal", "examples/yew"]

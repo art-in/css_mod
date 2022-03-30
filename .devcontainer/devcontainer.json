@@ -8,6 +8,7 @@
     "matklad.rust-analyzer",
     "tamasfe.even-better-toml",
     "serayuzgur.crates",
-    "jedeop.crates-completer"
+    "jedeop.crates-completer",
+    "esbenp.prettier-vscode"
   ]
 }

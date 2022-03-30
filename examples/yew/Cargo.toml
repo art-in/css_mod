@@ -1,0 +1,18 @@
+[package]
+name = "yew-example"
+version = "0.1.0"
+authors = ["Sergey Gavrilov <artin@artin.space>"]
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+css_mod = { path = "../../css_mod" }
+yew = { git = "https://github.com/yewstack/yew", features = ["csr"] }
+web-sys = { version = "0.3", features = ["HtmlInputElement"] }
+serde = { version = "1.0", features = ["derive"] }
+strum = "0.24"
+strum_macros = "0.24"
+gloo = "0.6"
+
+[build-dependencies]
+css_mod = { path = "../../css_mod" }

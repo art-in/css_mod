@@ -1,0 +1,13 @@
+[serve]
+port = 8080
+
+[[hooks]]
+stage = "pre_build"
+command = "sh"
+command_arguments = [
+    "-c",
+    # trigger cargo build script (which generates css assets) before running Trunk build, because
+    # Trunk runs asset pipelines (css and rust) in parallel. specify same target that is used by
+    # Trunk so it can reuse compilation results (ie. not recompile css and rust twice)
+    "cargo check --target wasm32-unknown-unknown",
+]
