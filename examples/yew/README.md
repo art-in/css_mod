@@ -11,6 +11,7 @@ This is implementation of [TodoMVC](https://todomvc.com/) web app.
 ## Install & Run
 
 ```sh
+> rustup target add wasm32-unknown-unknown
 > cargo install trunk
 > trunk serve
 ```
