@@ -51,6 +51,8 @@ macro_rules! init {
 
 /// Gets name mapping for CSS module.
 ///
+/// Target file path is relative to source file in posix-style (ie. with forward slash separators).
+///
 /// # Example
 ///
 /// ```no_run
@@ -62,7 +64,6 @@ macro_rules! init {
 #[macro_export]
 macro_rules! get {
     ($a:expr) => {{
-        let css_file = ::std::path::Path::new(file!()).with_file_name($a);
-        ::css_mod::get_mapping(css_file)
+        ::css_mod::get_mapping(file!(), $a)
     }};
 }

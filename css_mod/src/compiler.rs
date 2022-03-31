@@ -104,9 +104,13 @@ impl Compiler {
         let workspace_dir = Self::get_workspace_dir()?;
         log::debug!("workspace dir: {:?}", workspace_dir);
 
+        let is_windows_host = cfg!(windows);
+        log::debug!("is windows host: {}", is_windows_host);
+
         mappings_code_content.push_str(
+            // save host os info into mappings since it's impossible to get it outside of build script
             &quote! {
-                ::css_mod::Mappings::default()
+                ::css_mod::Mappings::default().is_windows_host(#is_windows_host)
             }
             .to_string(),
         );
@@ -116,15 +120,22 @@ impl Compiler {
                 css_bundle_content.push_str(&format!("{}", child));
             }
 
-            // mapping is going to be looked up with module file path as a key (see css_mod::get!).
-            // that path key is constructed from file!() macro, which returns path relative to
-            // workspace directory. so path constructed here should also be relative to workspace
+            // css_mod::get!() will look up name mapping with module file path as a key. that path
+            // is constructed from file!() macro, which returns path relative to workspace
+            // directory. so make sure constructed module path key is relative to workspace
             debug_assert!(module.file_path.is_absolute());
-            let relative_module_path = module
+            let mut module_file_path = module
                 .file_path
                 .strip_prefix(&workspace_dir)?
                 .to_str()
-                .context("Failed to construct relative module path")?;
+                .context("Failed to construct relative module path")?
+                .to_owned();
+
+            // css_mod::get!() will receive posix-style path (ie. with forward slash separators).
+            // so make sure constructed module path key is normalized to posix-style
+            if is_windows_host {
+                module_file_path = module_file_path.replace('\\', "/");
+            }
 
             let mut identifiers = Vec::new();
 
@@ -134,7 +145,7 @@ impl Compiler {
 
             let mapping_code = quote! {
                 .add_mapping(
-                    #relative_module_path,
+                    #module_file_path,
                     [#(#identifiers),*],
                 )
             };
