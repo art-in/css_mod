@@ -1,6 +1,6 @@
 [package]
 name = "css_mod"
-version = "0.1.2"
+version = "0.1.3"
 description = "CSS Modules implementation for Rust web applications"
 homepage = "https://github.com/art-in/css_mod"
 repository = "https://github.com/art-in/css_mod"
