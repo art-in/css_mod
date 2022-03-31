@@ -37,18 +37,6 @@ impl Compiler {
         Compiler::default()
     }
 
-    fn add_module_buf(&mut self, mut path: PathBuf) -> Result<()> {
-        if path.is_relative() {
-            let manifest_dir = env::var("CARGO_MANIFEST_DIR").context("CARGO_MANIFEST_DIR")?;
-            path = PathBuf::from(manifest_dir).join(path);
-        }
-
-        log::debug!("add css module: {:?}", path);
-        self.input_modules.insert(path);
-
-        Ok(())
-    }
-
     /// Adds CSS module to compile.
     ///
     /// Arguments:
@@ -75,9 +63,22 @@ impl Compiler {
         Ok(self)
     }
 
-    /// Transforms input CSS modules and produces CSS bundle with contents of them all.
+    fn add_module_buf(&mut self, mut path: PathBuf) -> Result<()> {
+        if path.is_relative() {
+            let manifest_dir = env::var("CARGO_MANIFEST_DIR").context("CARGO_MANIFEST_DIR")?;
+            path = PathBuf::from(manifest_dir).join(path);
+        }
+
+        log::debug!("add css module: {:?}", path);
+        self.input_modules.insert(path);
+
+        Ok(())
+    }
+
+    /// Parses and transforms input CSS modules.
     ///
-    /// Also generates name mappings which can be later retreived with `css_mod::get!()`.
+    /// Generates CSS bundle file ready to include in HTML page, and name mappings rust code ready
+    /// to include into rust project with `css_mod::init!()`.
     ///
     /// Arguments:
     ///
@@ -156,7 +157,7 @@ impl Compiler {
         // output mappings code
         let out_dir = env::var("OUT_DIR").context(
             "OUT_DIR environment variable was not found. \
-                Help: CSS modules compilation should run from build script.",
+                Help: CSS modules compilation should run from cargo build script.",
         )?;
         let out_dir = Path::new(&out_dir);
 
@@ -184,6 +185,7 @@ impl Compiler {
     /// if it is not part of workspace.
     fn get_workspace_dir() -> Result<PathBuf> {
         // this is ugly but the only way to get workspace directory path right now
+        // TODO: replace with environment variable when cargo supports it
         // https://github.com/rust-lang/cargo/issues/3946
         #[derive(Deserialize)]
         struct Manifest {

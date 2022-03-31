@@ -65,5 +65,3 @@ This is currently incomplete implementation of [CSS Modules] spec, as it only su
 Look in the [examples](./examples/) directory.
 
 [css modules]: https://github.com/css-modules/css-modules
-
-<!-- TODO: Add license info -->

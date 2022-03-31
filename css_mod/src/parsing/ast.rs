@@ -369,7 +369,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn empty_stylesheet_parses() {
+    fn parses_empty_stylesheet() {
         assert_eq!(
             Stylesheet::default(),
             Stylesheet {
@@ -380,7 +380,7 @@ mod tests {
     }
 
     #[test]
-    fn empty_select_rule_parses() {
+    fn parses_empty_select_rule() {
         assert_eq!(
             Stylesheet::default().add_test_module(".foobar {}").unwrap(),
             &Module {
@@ -397,7 +397,7 @@ mod tests {
     }
 
     #[test]
-    fn select_rule_with_property_parses() {
+    fn parses_select_rule_with_property() {
         assert_eq!(
             Stylesheet::default()
                 .add_test_module(".foobar { color: red; }")
@@ -419,7 +419,7 @@ mod tests {
     }
 
     #[test]
-    fn empty_at_rule_parses() {
+    fn parses_empty_at_rule() {
         assert_eq!(
             Stylesheet::default()
                 .add_test_module("@keyframes foobar;")
@@ -439,11 +439,6 @@ mod tests {
     }
 
     #[test]
-    fn unclosed_block_is_an_error() {
-        assert!(Stylesheet::default().add_test_module("p {").is_err());
-    }
-
-    #[test]
     fn format_empty_module() {
         let mut stylesheet = Stylesheet::default();
         let module = stylesheet.add_test_module("").unwrap();
@@ -452,15 +447,38 @@ mod tests {
     }
 
     #[test]
-    fn format_selectrule_with_property() {
+    fn format_select_rule() {
         let mut stylesheet = Stylesheet::default();
         let module = stylesheet
             .add_test_module("p.foobar  {  color :  #fff ;  }")
             .unwrap();
 
         assert_eq!(
-            format!("{}", module),
-            String::from("p.ast__foobar__0 { color: #fff; }\n")
+            &format!("{}", module),
+            "p.ast__foobar__0 { color: #fff; }\n"
         );
+    }
+
+    #[test]
+    fn format_at_rule() {
+        let mut stylesheet = Stylesheet::default();
+        let module = stylesheet
+            .add_test_module("@keyframes animation {0% { top: 0;} 100% {top: 100px;}}")
+            .unwrap();
+
+        assert_eq!(
+            &format!("{}", module),
+            "@keyframes ast__animation__0 { 0% { top: 0; }\n100% { top: 100px; }\n}\n"
+        );
+    }
+
+    #[test]
+    fn error_is_unclosed_block() {
+        assert!(Stylesheet::default().add_test_module("p {").is_err());
+    }
+
+    #[test]
+    fn error_is_property_without_value() {
+        assert!(Stylesheet::default().add_test_module("p {color;}").is_err());
     }
 }
