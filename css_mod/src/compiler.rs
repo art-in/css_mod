@@ -11,8 +11,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-// TODO: think about returning Errors instead of panics everywhere in compiler
-
 #[allow(clippy::needless_doctest_main)]
 /// CSS Modules compiler.
 ///
@@ -45,9 +43,7 @@ impl Compiler {
             path = PathBuf::from(manifest_dir).join(path);
         }
 
-        // TODO: remove debug?
         log::debug!("add css module: {:?}", path);
-
         self.input_modules.insert(path);
 
         Ok(())
@@ -154,11 +150,7 @@ impl Compiler {
             css_bundle_path = package_dir.join(&css_bundle_path);
         }
 
-        log::debug!(
-            "css bundle ({:?}):\n{}",
-            css_bundle_path,
-            css_bundle_content
-        );
+        log::debug!("output css bundle: {:?}", css_bundle_path);
         Self::write(&css_bundle_path, css_bundle_content)?;
 
         // output mappings code
@@ -169,11 +161,7 @@ impl Compiler {
         let out_dir = Path::new(&out_dir);
 
         let mappings_code_file_path = &out_dir.join(crate::MAPPINGS_FILE_NAME!());
-        log::debug!(
-            "mappings code ({:?}):\n{}",
-            mappings_code_file_path,
-            mappings_code_content
-        );
+        log::debug!("output mappings code: {:?}", mappings_code_file_path);
         Self::write(mappings_code_file_path, mappings_code_content)?;
 
         Ok(())
