@@ -23,10 +23,10 @@ This is currently incomplete implementation of [CSS Modules] spec, as it only su
     # Cargo.toml
 
     [dependencies]
-    css_mod = { git = "https://github.com/art-in/css_mod" }
+    css_mod = "0.1.0"
 
     [build-dependencies]
-    css_mod = { git = "https://github.com/art-in/css_mod" }
+    css_mod = "0.1.0"
     ```
 
 2. Create build script and call compiler:
