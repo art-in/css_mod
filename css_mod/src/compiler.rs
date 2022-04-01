@@ -3,7 +3,7 @@ use crate::utils::{get_workspace_dir, write_file};
 use anyhow::{Context, Result};
 use glob::glob;
 use quote::quote;
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::env;
 use std::path::{Path, PathBuf};
 
@@ -25,7 +25,9 @@ use std::path::{Path, PathBuf};
 /// ```
 #[derive(Debug, Default)]
 pub struct Compiler {
-    input_modules: HashSet<PathBuf>,
+    // use sorted set instead of hash set so output bundle is rendered deterministically with the
+    // same content across recompilations
+    input_modules: BTreeSet<PathBuf>,
 }
 
 impl Compiler {

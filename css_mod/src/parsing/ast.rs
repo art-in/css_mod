@@ -1,7 +1,7 @@
 use super::parser::{self, Error, Rule};
 use anyhow::{anyhow, Context, Result};
 use pest::iterators::{Pair, Pairs};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 use std::fs::File;
 use std::io::prelude::*;
@@ -192,7 +192,9 @@ impl<'m> Module {
 
 #[derive(Debug, Default, PartialEq)]
 pub struct Stylesheet {
-    pub modules: HashMap<PathBuf, Module>,
+    // use sorted map instead of hash map so output bundle is rendered deterministically with the
+    // same content across recompilations
+    pub modules: BTreeMap<PathBuf, Module>,
     pub names_count: u64,
 }
 
@@ -374,7 +376,7 @@ mod tests {
             Stylesheet::default(),
             Stylesheet {
                 names_count: 0,
-                modules: HashMap::new(),
+                modules: BTreeMap::new(),
             }
         )
     }
