@@ -2,6 +2,8 @@ use yew::prelude::*;
 
 #[derive(PartialEq, Properties, Clone)]
 pub struct Props {
+    #[prop_or_default]
+    pub class: Classes,
     pub todo: crate::state::Todo,
     pub on_toggle: Callback<usize>,
     pub on_remove: Callback<usize>,
@@ -23,7 +25,7 @@ pub fn Todo(props: &Props) -> Html {
         move |_| on_remove.emit(id)
     };
 
-    let mut class = Classes::from(css["root"]);
+    let mut class = classes!(css["root"], props.class.clone());
     if props.todo.completed {
         class.push(css["completed"]);
     }

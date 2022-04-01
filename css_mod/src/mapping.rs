@@ -1,3 +1,4 @@
+use crate::utils::join_paths;
 use once_cell::sync::OnceCell;
 use std::{collections::HashMap, ops::Index, panic};
 
@@ -51,43 +52,45 @@ impl<'ms> Mappings<'ms> {
 
 pub static MAPPINGS: OnceCell<Mappings> = OnceCell::new();
 
-// Gets CSS name mapping
-//
-// This is private API and intended to be used through public `css_mod::get!()` macro only.
-//
-// * `source_path`: Source code file from which function is called. It is expected to be
-//                  result of `file!()` macro, which returns path in host-os-style
-// * `css_module_path`: CSS module file path. Relative to source file - cannot be absolute.
-//                      In posix-style - cannot be in windows style (ie. with backward slashes)
 pub fn get_mapping<'g>(source_path: &str, css_module_path: &str) -> &'g Mapping<'g> {
     let mappings = MAPPINGS.get().expect(
         "Mappings are not initialized. \
                 Help: call css_mod::init!() once early (eg. in main.rs)",
     );
 
-    // normalize source file path to posix-style (ie. with forward slash separators), because
-    // `std::path::Path` parses paths with posix-style logic when been built for wasm target.
-    // ie. `file!()` returns path in host-os-style, while `std::path::Path` parses path in
-    // target-os-style. eg. when building on windows host `source_file_path` is in windows-style
-    // (ie. with backward slash separators), while `std::path::Path` been built for wasm target
-    // parses it as posix-style path so doesn't recornize separators. as a result `with_file_name`
-    // replaces whole path with `css_module_path`.
-    // using `std::path::Path` instead of simple handmade last fragment replacement is important
-    // because it allows to merge with relative CSS module path, which is hard to do by hand.
-    let source_path_normalized = if mappings.is_windows_host {
+    let module_file_path =
+        resolve_module_file_path(source_path, css_module_path, mappings.is_windows_host);
+
+    mappings
+        .map
+        .get(&module_file_path as &str)
+        .unwrap_or_else(|| panic!("CSS module was not found: {:?}", css_module_path))
+}
+
+// Resolves CSS module file path.
+//
+// TODO: resolve CSS module paths when compiling, as it should not happen on performance critical
+//       path at runtime. try to move it to proc_macro when `proc_macro::Span` is stabilized
+//       https://github.com/rust-lang/rust/issues/54725
+//
+// * `source_path`: Source code file path from which CSS module is requested.
+//      In host-os-style (ie. on windows - with backward, otherwise - forward slash separators).
+//      Expected to be result of `file!()` macro.
+// * `css_module_path`: CSS module file path relative to source file.
+//      In posix-style (ie. with forward slash separators).
+fn resolve_module_file_path(
+    source_path: &str,
+    css_module_path: &str,
+    is_windows_host: bool,
+) -> String {
+    // normalize source path separators to posix-style, since `file!()` returns host-os-style paths.
+    // not using cfg!(windows) here because it corresponds to target (which is 'wasm' when
+    // been built for browser), not host os on which building is happening
+    let source_path_normalized = if is_windows_host {
         source_path.replace('\\', "/")
     } else {
         source_path.to_owned()
     };
 
-    let module_file_path =
-        std::path::Path::new(&source_path_normalized).with_file_name(css_module_path);
-    let module_file_path = module_file_path
-        .to_str()
-        .expect("Failed to read CSS module path");
-
-    mappings
-        .map
-        .get(module_file_path)
-        .unwrap_or_else(|| panic!("CSS module was not found: {:?}", css_module_path))
+    join_paths(&source_path_normalized, css_module_path)
 }

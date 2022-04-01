@@ -4,11 +4,10 @@ use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
-    #[prop_or_default]
-    pub class: Classes,
     pub filter: FilterModel,
     pub total: usize,
     pub completed: usize,
+    pub is_empty: bool,
     pub on_set_filter: Callback<FilterModel>,
     pub on_clear_completed: Callback<MouseEvent>,
 }
@@ -16,8 +15,10 @@ pub struct Props {
 #[function_component]
 pub fn StatusBar(props: &Props) -> Html {
     let css = css_mod::get!("status_bar.css");
+    let shared_css = css_mod::get!("../shared.css");
+
     html! {
-        <footer class={classes!(css["root"], props.class.clone())}>
+        <footer class={classes!(css["root"], props.is_empty.then(|| shared_css["hidden"]))}>
             <span class={css["total-count"]}>
                 <span>{ props.total }</span>
                 { " item(s) left" }

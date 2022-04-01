@@ -51,7 +51,10 @@ macro_rules! init {
 
 /// Gets name mapping for CSS module.
 ///
-/// Target file path is relative to source file in posix-style (ie. with forward slash separators).
+/// # Arguments
+///
+/// * `file_path`: CSS module file path relative to source file in posix-style (ie. with forward
+///                slash separators).
 ///
 /// # Example
 ///

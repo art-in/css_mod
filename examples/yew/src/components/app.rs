@@ -79,17 +79,17 @@ pub fn App() -> Html {
             <main class={css["main"]}>
                 <NewTodo {is_all_completed} {is_empty} {on_toggle_all} {on_add} />
                 <TodoList
-                    class={classes!(is_empty.then(|| css["hidden"]))}
                     filter={state.filter}
                     todos={state.todos.clone()}
+                    {is_empty}
                     {on_toggle}
                     {on_remove}
                 />
                 <StatusBar
-                    class={classes!(is_empty.then(|| css["hidden"]))}
                     filter={state.filter}
                     {total}
                     {completed}
+                    {is_empty}
                     {on_set_filter}
                     {on_clear_completed}
                 />

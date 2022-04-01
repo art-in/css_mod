@@ -3,10 +3,6 @@
     font-size: 24px;
 }
 
-.root:not(:last-child) {
-    border-bottom: 1px solid #ededed;
-}
-
 .toggle {
     text-align: center;
     width: 40px;
