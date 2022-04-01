@@ -4,7 +4,7 @@ This is implementation of [TodoMVC](https://todomvc.com/) web app.
 
 ## Concepts
 
--   Component styles encapsulation (localized class/animation names)
+-   Component styles encapsulation (css file per component)
 -   Sharing styles between multiple components (in `src/shared.css`)
 -   Global styles (in `src/global.css`)
 -   Prebuilding css assets for `trunk` (see `Trunk.toml`)
