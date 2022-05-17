@@ -1,4 +1,6 @@
 [![ci](https://github.com/art-in/css_mod/actions/workflows/ci.yml/badge.svg)](https://github.com/art-in/css_mod/actions/workflows/ci.yml)
+[![crate](https://img.shields.io/crates/v/css_mod.svg)](https://crates.io/crates/css_mod)
+![rustc version](https://img.shields.io/badge/rustc-stable-lightgrey.svg)
 
 [CSS Modules] implementation for Rust web applications
 
