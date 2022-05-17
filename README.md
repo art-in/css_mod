@@ -1,3 +1,5 @@
+[![ci](https://github.com/art-in/css_mod/actions/workflows/ci.yml/badge.svg)](https://github.com/art-in/css_mod/actions/workflows/ci.yml)
+
 [CSS Modules] implementation for Rust web applications
 
 > A **CSS Module** is a CSS file in which all class names and animation names are scoped locally by default.
