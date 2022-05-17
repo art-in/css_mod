@@ -1,3 +1,5 @@
+# css_mod
+
 [![ci](https://github.com/art-in/css_mod/actions/workflows/ci.yml/badge.svg)](https://github.com/art-in/css_mod/actions/workflows/ci.yml)
 [![crate](https://img.shields.io/crates/v/css_mod.svg)](https://crates.io/crates/css_mod)
 ![rustc version](https://img.shields.io/badge/rustc-stable-lightgrey.svg)
@@ -6,7 +8,7 @@
 
 > A **CSS Module** is a CSS file in which all class names and animation names are scoped locally by default.
 
-# Features
+## Features
 
 This is currently incomplete implementation of [CSS Modules] spec, as it only supports the vital features.
 
@@ -19,7 +21,7 @@ This is currently incomplete implementation of [CSS Modules] spec, as it only su
 -   [ ] `composes`
 -   [ ] `url()` / `@import`
 
-# Usage
+## Usage
 
 1. Add this crate as a regular and build dependency:
 
@@ -64,7 +66,7 @@ This is currently incomplete implementation of [CSS Modules] spec, as it only su
     let global_class_name = css["local-class-name"]; // my-component__local-class-name__0
     ```
 
-# Examples
+## Examples
 
 Look in the [examples](./examples/) directory.
 
