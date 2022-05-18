@@ -1,6 +1,7 @@
 // TODO: replace with simple contant when rust supports using them as arguments for std macros
 // https://github.com/rust-lang/rust/issues/53749
 #[macro_export]
+#[doc(hidden)]
 macro_rules! MAPPINGS_FILE_NAME {
     () => {
         "css_mod_mappings.rs"
