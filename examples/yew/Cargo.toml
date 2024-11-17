@@ -7,7 +7,8 @@ license = "MIT"
 
 [dependencies]
 css_mod = { path = "../../css_mod" }
-yew = { git = "https://github.com/yewstack/yew", features = ["csr"] }
+# yew commit from "Mar 28, 2022"
+yew = { git = "https://github.com/yewstack/yew", rev = "ea8a530454f2bd82637cff1f4494d37e4d93e95d", features = ["csr"] }
 web-sys = { version = "0.3", features = ["HtmlInputElement"] }
 serde = { version = "1.0", features = ["derive"] }
 strum = "0.24"
